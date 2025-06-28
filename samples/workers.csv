@@ -1,0 +1,4 @@
+WorkerID,WorkerName,Skills,AvailableSlots,MaxLoadPerPhase,WorkerGroup,QualificationLevel
+W1,John Doe,"Python,JavaScript,React","1,2,3",3,Senior,Expert
+W2,Jane Smith,"Python,Data Analysis","2,4,5",2,Mid,Intermediate
+W3,Bob Wilson,"JavaScript,React,Node.js","1,3,4",4,Senior,Expert 

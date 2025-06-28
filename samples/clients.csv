@@ -1,0 +1,5 @@
+ClientID,ClientName,PriorityLevel,RequestedTaskIDs,GroupTag,AttributesJSON
+C1,Acme Corp,3,"T1,T2,T3",Enterprise,"{""industry"":""tech"",""region"":""US""}"
+C2,TechStart,1,"T1,T4",Startup,"{invalid json here}"
+C3,Global Inc,5,"T2,T5",Enterprise,"{""industry"":""manufacturing"",""region"":""ASIA""}"
+C31,Nova Solutions,5,"T1,T49,T11,T29,T22,T60",GroupC,"{""industry"":""consulting"",""region"":""US""}" 
