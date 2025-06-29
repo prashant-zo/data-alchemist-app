@@ -7,7 +7,8 @@
 This project was built as a product-thinking assignment for Digitalyz, but is open for anyone who wants to bring order to spreadsheet chaos!
 
 ---
-
+https://github.com/user-attachments/assets/d0f3a645-1e0c-4b5f-8e4e-067931ab86a6
+---
 ## How it Works
 
 1. **Upload Data:**
