@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     }
 
     // --- CRITICAL FIX: Proper Data Transformation ---
-    const transformedData = parsedData.map((row, index) => {
+    const transformedData = parsedData.map((row: any, index) => {
       const baseItem = {
         _id: `${entityType}-${index + 1}`, // Ensure unique React key
       };

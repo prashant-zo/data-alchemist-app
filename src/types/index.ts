@@ -1,5 +1,6 @@
-// Core Data Entities
+// src/types/index.ts
 
+// --- Core Data Entities ---
 export interface Client {
   ClientID: string;
   ClientName: string;
@@ -7,8 +8,8 @@ export interface Client {
   RequestedTaskIDs: string[]; 
   GroupTag: string;
   AttributesJSON: Record<string, any>; 
-  _id?: string; // A unique ID for React keys
-  _errors?: Record<keyof Omit<Client, '_id' | '_errors'>, string>; // To store validation errors per field
+  _id?: string;
+  _errors?: Record<string, string>;
 }
 
 export interface Worker {
@@ -20,7 +21,7 @@ export interface Worker {
   WorkerGroup: string;
   QualificationLevel: string; 
   _id?: string;
-  _errors?: Record<keyof Omit<Worker, '_id' | '_errors'>, string>;
+  _errors?: Record<string, string>;
 }
 
 export interface Task {
@@ -32,10 +33,10 @@ export interface Task {
   PreferredPhases: (string | number)[];
   MaxConcurrent: number; 
   _id?: string;
-  _errors?: Record<keyof Omit<Task, '_id' | '_errors'>, string>;
+  _errors?: Record<string, string>;
 }
 
-// Helper Types for State Management
+// --- Helper Types ---
 export type EntityType = 'clients' | 'workers' | 'tasks';
 
 export interface DataBundle {
@@ -44,16 +45,21 @@ export interface DataBundle {
   tasks: Task[];
 }
 
-// Validation Types
+export interface FilterCondition {
+  field: string;
+  operator: '>' | '<' | '=' | '>=' | '<=' | 'contains' | 'not contains';
+  value: string | number;
+}
+
+
+// --- Validation Types ---
 export interface ValidationError {
   entityType: EntityType;
   entityId: string;
   field: string; 
   message: string;
-  isGlobal?: boolean; // For errors not tied to a specific field but to the entity or file
 }
 
-// To represent the validation status summary
 export interface ValidationSummary {
   totalErrors: number;
   errorsByEntity: {
@@ -61,21 +67,25 @@ export interface ValidationSummary {
     workers: number;
     tasks: number;
   };
-  errorMessages: ValidationError[]; // Detailed list of errors
+  errorMessages: ValidationError[];
 }
 
 
-// Rule Types (We'll expand this for Milestone 2)
+// ---------------
+// Rule Types (Your Corrected, Superior Structure)
+// ---------------
+
+export type RuleType = 'coRun' | 'slotRestriction' | 'loadLimit';
+
 export interface BaseRule {
-  id: string; 
-  type: string;
-  // We can add a user-defined name or description for the rule
-  description?: string; 
+  id: string;
+  type: RuleType;
+  description: string;
 }
 
 export interface CoRunRule extends BaseRule {
   type: "coRun";
-  tasks: string[]; 
+  tasks: string[];
 }
 
 export interface SlotRestrictionRule extends BaseRule {
@@ -85,22 +95,23 @@ export interface SlotRestrictionRule extends BaseRule {
   minCommonSlots: number;
 }
 
-// Add other rule types as needed from the assignment...
-// e.g. LoadLimitRule, PhaseWindowRule, PatternMatchRule, PrecedenceOverrideRule
+// Your excellent, consistent LoadLimitRule
+export interface LoadLimitRule extends BaseRule {
+  type: "loadLimit";
+  groupType: "worker";
+  groupName: string;
+  maxSlotsPerPhase: number;
+}
 
-export type BusinessRule = 
-  | CoRunRule 
-  | SlotRestrictionRule;
-  // | LoadLimitRule ... (add others when we build them)
+export type BusinessRule = CoRunRule | SlotRestrictionRule | LoadLimitRule;
 
 
-// Prioritization Types (For Milestone 2)
+// --- Prioritization & AI Types ---
 export interface PrioritizationWeights {
-  priorityLevel: number; // Weight for Client.PriorityLevel
-  requestedTaskFulfillment: number; // Weight for fulfilling RequestedTaskIDs
-  fairness: number; // Weight for fairness constraints (if applicable)
-  // Add more as needed based on assignment details for prioritization
-  [key: string]: number; // Allow for dynamic weights
+  [key: string]: number;
+  priorityLevel: number;
+  requestedTaskFulfillment: number;
+  fairness: number;
 }
 
 export const DEFAULT_PRIORITIZATION_WEIGHTS: PrioritizationWeights = {
@@ -109,15 +120,8 @@ export const DEFAULT_PRIORITIZATION_WEIGHTS: PrioritizationWeights = {
   fairness: 0.5,
 };
 
-// For AI Interaction (Can be expanded)
 export interface AiFilteredIds {
   clients: string[];
   workers: string[];
   tasks: string[];
-}
-
-export interface FilterCondition {
-  field: string;
-  operator: '>' | '<' | '=' | '>=' | '<=' | 'contains' | 'not contains';
-  value: string | number;
 }
