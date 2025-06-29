@@ -33,7 +33,6 @@ export default function HomePage() {
           <ValidationSummary />
         </section>
 
-        {/* --- RULE BUILDER SECTION --- */}
         <section>
           <RuleBuilder />
         </section>

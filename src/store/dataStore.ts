@@ -5,7 +5,6 @@ import {
   Worker,
   Task,
   EntityType,
-  ValidationError,
   ValidationSummary,
   BusinessRule,
   PrioritizationWeights,
@@ -14,6 +13,7 @@ import {
   FilterCondition,
 } from '@/types';
 import { immer } from 'zustand/middleware/immer';
+import type { WritableDraft } from 'immer';
 
 interface AppState {
   clients: Client[];
@@ -35,7 +35,7 @@ interface AppState {
 }
 
 interface AppActions {
-  setData: (entityType: EntityType, data: any[], fileError?: string | null) => void;
+  setData: (entityType: EntityType, data: unknown[], fileError?: string | null) => void;
   setLoading: (entityType: EntityType, isLoading: boolean) => void;
   updateClient: (clientId: string, updatedFields: Partial<Client>) => void;
   updateWorker: (workerId: string, updatedFields: Partial<Worker>) => void;
@@ -79,9 +79,15 @@ export const useDataStore = create<AppState & AppActions>()(
   immer((set) => ({
     ...initialState,
 
-    setData: (entityType, data, fileError = null) => { 
-      set((state) => { 
-        state[entityType] = data as any; 
+    setData: (entityType, data: unknown[], fileError = null) => { 
+      set((state: WritableDraft<AppState>) => { 
+        if (entityType === 'clients') {
+          state[entityType] = data as Client[];
+        } else if (entityType === 'workers') {
+          state[entityType] = data as Worker[];
+        } else if (entityType === 'tasks') {
+          state[entityType] = data as Task[];
+        }
         state.fileErrors[entityType] = fileError; 
         state.isLoading[entityType] = false; 
         state.validationSummary = null; 
@@ -128,7 +134,7 @@ export const useDataStore = create<AppState & AppActions>()(
       }); 
     },
     
-    setEntityErrors: (entityType, entityId, errors) => { 
+    setEntityErrors: (entityType, entityId, errors: Record<string, string> | undefined) => { 
       set(state => { 
         const idKeyMap = {
           clients: 'ClientID',
@@ -138,11 +144,11 @@ export const useDataStore = create<AppState & AppActions>()(
         const idKey = idKeyMap[entityType];
         const list = state[entityType] as (Client[] | Worker[] | Task[]); 
         const itemIndex = list.findIndex(item => { 
-          const itemPublicId = (item as any)[idKey]; 
+          const itemPublicId = (item as unknown as Record<string, unknown>)[idKey] as string; 
           return String(itemPublicId).trim() === String(entityId).trim(); 
         }); 
         if (itemIndex !== -1) { 
-          (list[itemIndex] as any)._errors = errors; 
+          (list[itemIndex] as unknown as Record<string, unknown>)._errors = errors; 
         } else { 
           console.error(`Failed to find item with ID '${entityId}' in ${entityType}`); 
         } 

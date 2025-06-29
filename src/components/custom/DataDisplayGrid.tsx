@@ -13,7 +13,6 @@ import { Button } from '@/components/ui/button';
 import { Loader2, Search, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
-// --- CONFIG AND HELPERS ---
 const columnConfig = {
   clients: [
     { header: 'Client ID', accessor: 'ClientID' },
@@ -46,17 +45,30 @@ const getEntityKey = (item: Client | Worker | Task): string => {
   return 'unknown-key';
 };
 
-const renderCellContent = (item: any, accessor: string) => {
+const renderCellContent = (item: Record<string, unknown>, accessor: string) => {
   const value = item[accessor];
   if (Array.isArray(value)) return value.join(', ');
   if (typeof value === 'object' && value !== null) return JSON.stringify(value);
   return String(value);
 };
 
-const applyFilters = (data: any[], filters: FilterCondition[]): any[] => {
+// Type guard for entities
+function isEntity(item: unknown): item is Client | Worker | Task {
+  return (
+    typeof item === 'object' && item !== null &&
+    (
+      'ClientID' in item ||
+      'WorkerID' in item ||
+      'TaskID' in item
+    )
+  );
+}
+
+const applyFilters = <T extends Client | Worker | Task>(data: T[], filters: FilterCondition[]): T[] => {
   if (filters.length === 0) return data;
   return data.filter(item => {
     return filters.every(filter => {
+      // @ts-expect-error: dynamic access
       const itemValue = item[filter.field];
       if (itemValue === undefined) return false;
       switch (filter.operator) {
@@ -92,17 +104,16 @@ const getFieldError = (item: Client | Worker | Task, field: string): string | un
   return undefined;
 };
 
-// Step 1: Add this function
-function renderAttributesJSONCell(item: any) {
+function renderAttributesJSONCell(item: Record<string, unknown>) {
   const value = item.AttributesJSON;
-  const error = getFieldError(item, 'AttributesJSON');
+  const error = getFieldError(item as unknown as Client | Worker | Task, 'AttributesJSON');
   let displayValue = '';
 
   if (typeof value === 'string') {
     displayValue = value;
   } else if (typeof value === 'object' && value !== null) {
-    if ('_parseError' in value && value._parseError) {
-      displayValue = value.value || '';
+    if ('_parseError' in value && (value as { _parseError?: boolean })._parseError) {
+      displayValue = (value as { value?: string }).value || '';
     } else {
       displayValue = JSON.stringify(value);
     }
@@ -139,9 +150,15 @@ export function DataDisplayGrid({ entityType, title }: DataDisplayGridProps) {
   const clearFilters = useDataStore((state) => state.clearFilters);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
-  const filteredData = useMemo(() => applyFilters(allData, activeFilters), [allData, activeFilters]);
+  const filteredData = useMemo(() => {
+    // Only filter if allData is an array of entities
+    if (Array.isArray(allData) && allData.every(isEntity)) {
+      return applyFilters(allData as (Client | Worker | Task)[], activeFilters);
+    }
+    return [];
+  }, [allData, activeFilters]);
 
-  const handleSearch = async (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
 
@@ -195,12 +212,11 @@ export function DataDisplayGrid({ entityType, title }: DataDisplayGridProps) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {/* Search Bar */}
         <form onSubmit={handleSearch} className="flex gap-2 mb-4">
           <Input
             placeholder="Search with natural language..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
             className="flex-1"
           />
           <Button type="submit" disabled={isSearching || !searchQuery.trim()}>
@@ -228,16 +244,15 @@ export function DataDisplayGrid({ entityType, title }: DataDisplayGridProps) {
             </TableHeader>
             <TableBody>
               {filteredData.length > 0 ? (
-                filteredData.map((item: Client | Worker | Task) => (
+                filteredData.map((item) => (
                   <TableRow key={item._id || getEntityKey(item)}>
                     {columns.map((col: { header: string; accessor: string }) => {
-                      // Step 3: Use the function for AttributesJSON column
                       if (entityType === 'clients' && col.accessor === 'AttributesJSON') {
                         return (
                           <TableCell 
                             key={`${item._id || getEntityKey(item)}-${col.accessor}`}
                           >
-                            {renderAttributesJSONCell(item)}
+                            {renderAttributesJSONCell(item as unknown as Record<string, unknown>)}
                           </TableCell>
                         );
                       }
@@ -248,7 +263,7 @@ export function DataDisplayGrid({ entityType, title }: DataDisplayGridProps) {
                           className={`relative ${hasError ? 'bg-red-50 border-red-200' : ''}`}
                         >
                           <div className={hasError ? 'text-red-700' : ''}>
-                            {renderCellContent(item, col.accessor)}
+                            {renderCellContent(item as unknown as Record<string, unknown>, col.accessor)}
                           </div>
                           {hasError && (
                             <div className="text-red-600 text-xs mt-1 font-medium">
@@ -262,8 +277,8 @@ export function DataDisplayGrid({ entityType, title }: DataDisplayGridProps) {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={columns.length} className="h-24 text-center">
-                    No results found.
+                  <TableCell colSpan={columns.length} className="text-center py-8 text-muted-foreground">
+                    No data to display
                   </TableCell>
                 </TableRow>
               )}

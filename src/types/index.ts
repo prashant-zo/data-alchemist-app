@@ -7,7 +7,7 @@ export interface Client {
   PriorityLevel: number; 
   RequestedTaskIDs: string[]; 
   GroupTag: string;
-  AttributesJSON: Record<string, any>; 
+  AttributesJSON: Record<string, unknown>; 
   _id?: string;
   _errors?: Record<string, string>;
 }

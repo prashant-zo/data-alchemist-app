@@ -4,7 +4,6 @@
 import React, { useState, useRef } from 'react';
 import { useDataStore } from '@/store/dataStore';
 import { EntityType } from '@/types';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
@@ -32,7 +31,6 @@ export function FileUploader({ entityType, title }: FileUploaderProps) {
     setFileName(file.name);
 
     const formData = new FormData(formRef.current!);
-    // The input name 'file' and a hidden input for 'entityType' will be picked up.
 
     try {
       const response = await fetch('/api/upload', {
@@ -55,7 +53,6 @@ export function FileUploader({ entityType, title }: FileUploaderProps) {
       toast.error(`Error loading ${title}`, { description: errorMessage });
     } finally {
       setIsLoading(false);
-      // Reset the form which clears the file input
       formRef.current?.reset();
       setFileName(null);
     }
@@ -63,7 +60,6 @@ export function FileUploader({ entityType, title }: FileUploaderProps) {
 
   return (
     <form ref={formRef} className="w-full">
-      {/* Hidden input to send entityType along with the file */}
       <input type="hidden" name="entityType" value={entityType} />
 
       <Label className="text-lg font-semibold">{title}</Label>
@@ -76,7 +72,6 @@ export function FileUploader({ entityType, title }: FileUploaderProps) {
           <p className="text-xs text-muted-foreground">{fileErrors ? <span className="text-destructive">{fileErrors}</span> : 'CSV or XLSX file'}</p>
         </div>
         <div className="flex-shrink-0">
-          {/* A label styled as a button is the most reliable way to trigger a file input */}
           <Label 
             htmlFor={`file-upload-${entityType}`}
             className={`cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -85,7 +80,7 @@ export function FileUploader({ entityType, title }: FileUploaderProps) {
           </Label>
           <Input 
             id={`file-upload-${entityType}`}
-            name="file" // Name is crucial for FormData
+            name="file"
             type="file" 
             className="hidden" 
             onChange={handleFileChangeAndSubmit} 
