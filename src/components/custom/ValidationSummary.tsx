@@ -5,6 +5,7 @@
     import { useDataStore } from '@/store/dataStore';
     import { runValidators } from '@/lib/validators';
     import { ValidationSummary as ValidationSummaryType } from '@/types';
+    import { EntityType } from '@/types';
     import { Button } from '@/components/ui/button';
     import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
     import { AlertTriangle, CheckCircle } from 'lucide-react';
@@ -42,7 +43,7 @@
 
         // Apply errors to individual entities for highlighting
         if (errors.length > 0) {
-        const errorsToApply = new Map<string, { entityType: any, errors: any }>();
+        const errorsToApply = new Map<string, { entityType: string, errors: Record<string, string> }>();
 
         errors.forEach(error => {
             const entityKey = `${error.entityType}-${error.entityId}`;
@@ -55,8 +56,8 @@
 
         // Update each entity with its specific errors
         errorsToApply.forEach((value, key) => {
-            const [_, entityId] = key.split('-');
-            setEntityErrors(value.entityType, entityId, value.errors);
+            const entityId = key.split('-')[1];
+            setEntityErrors(value.entityType as EntityType, entityId, value.errors);
         });
         }
     };

@@ -31,56 +31,42 @@ const rawJsonSchema = zodToJsonSchema(filtersSchema, {
 });
 
 // --- NEW STEP: Post-process the JSON Schema for Google Gemini API compatibility ---
-function cleanSchemaForGemini(schema: any): any {
+function cleanSchemaForGemini(schema: Record<string, unknown>): Record<string, unknown> {
   if (typeof schema !== 'object' || schema === null) {
     return schema;
   }
 
-  const cleanedSchema: any = {};
+  const cleanedSchema: Record<string, unknown> = {};
 
   for (const key in schema) {
-    if (schema.hasOwnProperty(key)) {
+    if (Object.prototype.hasOwnProperty.call(schema, key)) {
       if (key === 'additionalProperties' || key === 'patternProperties') {
-        // Explicitly skip these fields as Gemini API does not support them
         continue;
       }
 
       if (key === 'type' && Array.isArray(schema[key])) {
-        // Handle union types. Google often prefers 'anyOf' for union types
-        // where 'type' might be an array of strings like ["string", "number"]
-        // The error "Proto field is not repeating, cannot start list" often points here.
-        // We'll convert it to anyOf as per common practice for OpenAPI/Google's tool schema.
-        cleanedSchema['anyOf'] = schema[key].map((type: string) => ({ type: type }));
+        cleanedSchema['anyOf'] = (schema[key] as unknown[]).map((type) => ({ type: type }));
         continue;
       }
 
-      // Recursively clean nested objects/arrays
       if (Array.isArray(schema[key])) {
-        cleanedSchema[key] = schema[key].map((item: any) => cleanSchemaForGemini(item));
+        cleanedSchema[key] = (schema[key] as unknown[]).map((item) => cleanSchemaForGemini(item as Record<string, unknown>));
       } else if (typeof schema[key] === 'object') {
-        cleanedSchema[key] = cleanSchemaForGemini(schema[key]);
+        cleanedSchema[key] = cleanSchemaForGemini(schema[key] as Record<string, unknown>);
       } else {
         cleanedSchema[key] = schema[key];
       }
     }
   }
 
-  // Ensure 'type: object' is explicitly set for objects that are implicitly objects
-  // but might not have 'type' property if it's derived from 'properties'
   if (cleanedSchema.properties && !cleanedSchema.type) {
     cleanedSchema.type = 'object';
   }
 
-  // Handle $ref and defs for cleaner structure, as Gemini might not like top-level $ref
-  // The 'name' option in zodToJsonSchema creates a $ref. If we used 'name',
-  // we would take the definition out here.
-  // Given we are not using 'name' in zodToJsonSchema anymore, `rawJsonSchema`
-  // should directly be the object schema.
   if (cleanedSchema.$ref && cleanedSchema.definitions) {
-    const refKey = cleanedSchema.$ref.split('/').pop();
-    if (refKey && cleanedSchema.definitions[refKey]) {
-      // If the root is just a $ref, unwrap it.
-      return cleanSchemaForGemini(cleanedSchema.definitions[refKey]);
+    const refKey = (cleanedSchema.$ref as string).split('/').pop();
+    if (refKey && (cleanedSchema.definitions as Record<string, unknown>)[refKey]) {
+      return cleanSchemaForGemini((cleanedSchema.definitions as Record<string, unknown>)[refKey] as Record<string, unknown>);
     }
   }
 
@@ -88,7 +74,7 @@ function cleanSchemaForGemini(schema: any): any {
 }
 
 // Clean the schema for Gemini compatibility
-const parametersSchema: FunctionDeclarationSchema = cleanSchemaForGemini(rawJsonSchema) as FunctionDeclarationSchema;
+const parametersSchema: FunctionDeclarationSchema = cleanSchemaForGemini(rawJsonSchema) as unknown as FunctionDeclarationSchema;
 
 
 // --- Main function to generate filters ---
