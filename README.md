@@ -7,8 +7,6 @@
 This project was built as a product-thinking assignment for Digitalyz, but is open for anyone who wants to bring order to spreadsheet chaos!
 
 ---
-https://github.com/prashant-zo/data-alchemist-app/releases/tag/v1.0-demo
----
 ## How it Works
 
 1. **Upload Data:**
